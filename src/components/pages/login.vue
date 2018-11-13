@@ -39,7 +39,7 @@ export default {
       this.$http.post(api, vm.user).then(response => {
         console.log(response.data.success);
         if (response.data.success) {
-          vm.$router.push("/index");
+          vm.$router.push("/admin");
         }
         if (!response.data.success) {
           vm.user.username = "";
