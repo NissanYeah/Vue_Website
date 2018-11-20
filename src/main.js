@@ -6,11 +6,20 @@ import axios from 'axios'
 import 'bootstrap'
 import App from './App'
 import router from './router'
+import Loading from 'vue-loading-overlay';
+import pagination from './components/pagination';
+
+import './bus';
+import 'vue-loading-overlay/dist/vue-loading.css';
+Vue.component("Loading", Loading)
+Vue.component('pagination', pagination);
+
+// 啟用元件
 
 Vue.use(vueAxios, axios)
 
-Vue.config.productionTip = false
-
+Vue.config.productionTip = false;
+axios.defaults.withCredentials = true;
 /* eslint-disable no-new */
 new Vue({
   el: '#app',

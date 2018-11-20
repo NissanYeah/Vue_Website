@@ -1,5 +1,8 @@
 <template>
- <div> 
+ <div>
+   <div class="vld-parent">
+        <loading :active.sync="isLoading"></loading>
+    </div> 
   <body class="text-center">
     <form class="form-signin" @submit.prevent="signin">
       <h1 class="h3 mb-3 font-weight-normal">Please sign in</h1>
@@ -28,14 +31,15 @@ export default {
       user: {
         username: "",
         password: ""
-      }
+      },
+      isLoading: false
     };
   },
   methods: {
     signin() {
-      const api = `${process.env.APIPATH}/signin`;
+      const api = `${process.env.APIPATH}/admin/signin`;
       var vm = this;
-
+      vm.isLoading = true;
       this.$http.post(api, vm.user).then(response => {
         console.log(response.data.success);
         if (response.data.success) {
@@ -45,6 +49,7 @@ export default {
           vm.user.username = "";
           vm.user.password = "";
         }
+        vm.isLoading = false;
       });
     }
   }

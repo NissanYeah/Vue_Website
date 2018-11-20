@@ -1,5 +1,8 @@
 <template>
  <div>
+     <div class="vld-parent">
+        <loading :active.sync="isLoading"></loading>
+    </div>
    <div class="text-right">
      <button type="button" class="btn btn-primary" @click="openModal(true)">
   建立新的產品
@@ -35,8 +38,14 @@
    </table>
 
 
+
+
+<!-- modal -->
+
+
 <div class="modal fade" id="productModal" tabindex="-1" role="dialog"
   aria-labelledby="exampleModalLabel" aria-hidden="true">
+  
   <div class="modal-dialog modal-lg" role="document">
     <div class="modal-content border-0">
       <div class="modal-header bg-dark text-white">
@@ -57,10 +66,10 @@
             </div>
             <div class="form-group">
               <label for="customFile">或 上傳圖片
-                <i class="fas fa-spinner fa-spin"></i>
+                <i class="fas fa-spinner fa-spin" v-if="status.file"></i>
               </label>
               <input type="file" id="customFile" class="form-control" 
-                ref="files"> 
+                ref="files" @change="uploadFile()"> 
             </div>
             <img img="https://images.unsplash.com/photo-1483985988355-763728e1935b?ixlib=rb-0.3.5&ixid=eyJhcHBfaWQiOjEyMDd9&s=828346ed697837ce808cae68d3ddc3cf&auto=format&fit=crop&w=1350&q=80"
               class="img-fluid" alt="">
@@ -151,6 +160,27 @@
     </div>
   </div>
 </div>
+<pagination :page-data="pagination" @changepage="getproduct" class="d-flex justify-content-center"></pagination>
+<!-- pagination -->
+<!-- <nav aria-label="Page navigation example">
+  <ul class="pagination">
+    <li class="page-item" :class="{'disabled':!pagination.has_pre}">
+      <a class="page-link" @click.prevent="getproduct(pagination.current_page-1)" href="#" aria-label="Previous">
+        <span aria-hidden="true">&laquo;</span>
+        <span class="sr-only">Previous</span>
+      </a>
+    </li>
+    <li  class="page-item" v-for="page in pagination.total_pages" :class="{'disabled':page===pagination.current_page}" :key="page" >
+      <a class="page-link" @click.prevent="getproduct(page)"   href="#">{{page}}</a></li>
+    <li class="page-item" :class="{'disabled':!pagination.has_next}">
+      <a class="page-link" @click.prevent="getproduct(pagination.current_page+1)" href="#" aria-label="Next">
+        <span aria-hidden="true">&raquo;</span>
+        <span class="sr-only">Next</span>
+      </a>
+    </li>
+  </ul>
+</nav> -->
+
 
 
 </div>
@@ -159,23 +189,34 @@
 
 <script>
 import $ from "jquery";
+
 export default {
   data() {
     return {
       products: [],
+      // products pulled from API
       tempProduct: {},
-      isNew: false
+      // item for updating or editimg
+      isNew: false,
+      isLoading: false,
+      status: {
+        file: false
+      },
+      pagination: {}
     };
   },
   methods: {
-    getproduct() {
+    getproduct(page = 1) {
       const api = `${process.env.APIPATH}/api/${
         process.env.CUSTOMPATH
-      }/products`;
+      }/products?page=${page}`;
       const vm = this;
+      vm.isLoading = true;
       this.$http.get(api).then(response => {
-        console.log(response.data.products);
+        console.log(response.data);
         vm.products = response.data.products;
+        vm.pagination = response.data.pagination;
+        vm.isLoading = false;
       });
     },
     openModal(isNew, item) {
@@ -186,7 +227,38 @@ export default {
       } else {
         this.tempProduct = Object.assign({}, item);
         this.isNew = false;
+        // Object.assign({})
       }
+    },
+    uploadFile() {
+      console.log(this);
+      const uploadFile = this.$refs.files.files[0];
+      const vm = this;
+      const formData = new FormData();
+      formData.append("file-to-upload", uploadFile);
+      console.log(formData);
+      const url = `${process.env.APIPATH}/api/${
+        process.env.CUSTOMPATH
+      }/admin/upload`;
+
+      vm.status.file = true;
+      this.$http
+        .post(url, formData, {
+          headers: { "Content-Type": "multipaet/form-data" }
+        })
+        .then(response => {
+          if (response.data.success) {
+            console.log("上傳成功");
+            // vm.tempProduct.imageUrl = response.data.imageUrl;
+            vm.$set(vm.tempProduct, "imageUrl", response.data.imageUrl);
+            console.log(vm.tempProduct.imageUrl);
+            vm.$bus.$emit("message:push", "圖片上傳成功", "success");
+            vm.status.file = false;
+          } else {
+            vm.$bus.$emit("message:push", response.data.message, "danger");
+            console.log("上傳圖片失敗");
+          }
+        });
     },
 
     updateProduct() {
@@ -196,6 +268,7 @@ export default {
       }/admin/product`;
       let httpMethod = "post";
       const vm = this;
+      vm.isLoading = true;
       if (!vm.isNew) {
         api = `${process.env.APIPATH}/api/${
           process.env.CUSTOMPATH
@@ -206,11 +279,14 @@ export default {
       this.$http[httpMethod](api, { data: vm.tempProduct }).then(response => {
         if (response.data.success) {
           $("#productModal").modal("hide");
+          vm.$bus.$emit("message:push", "資料更新成功", "success");
           vm.getproduct();
         } else {
           $("#productModal").modal("hide");
           console.log("更新失敗");
           console.log(response);
+          vm.$bus.$emit("message:push", response.data.message, "danger");
+          vm.isLoading = false;
         }
       });
     }

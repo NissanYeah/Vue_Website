@@ -2,7 +2,7 @@
  <div>
    
  <navbar/>
-
+<AlertMessage/>
     <div class="container-fluid">
       <div class="row">
          <sidebar/>
@@ -10,8 +10,8 @@
        <router-view/>
        </main>
       </div>
+     
     </div>
-    
  
 </div>
 
@@ -20,12 +20,14 @@
 <script>
 import navbar from "./navbar";
 import sidebar from "./sidebar";
+import AlertMessage from "./AlertMessage";
 
 export default {
   name: "dashboard",
   components: {
     navbar,
-    sidebar
+    sidebar,
+    AlertMessage
   }
 };
 </script>
