@@ -4,6 +4,7 @@ import dashboard from '@/components/dashboard'
 import login from '@/components/pages/login'
 import logout from '@/components/pages/logout'
 import product from '@/components/pages/product'
+import store from '@/components/pages/store'
 
 
 Vue.use(Router)
@@ -17,7 +18,7 @@ export default new Router({
       name: 'dashboard',
       component: dashboard,
       children: [{
-        path: '',
+        path: 'product',
         component: product,
         meta: {
           requiresAuth: true
@@ -32,6 +33,16 @@ export default new Router({
       path: '/logout',
       name: 'logout',
       component: logout,
+
+    }, {
+      path: '/',
+      name: 'dashboard',
+      component: dashboard,
+      children: [{
+        path: 'store',
+        name: 'sotre',
+        component: store,
+      }]
 
     }
   ]

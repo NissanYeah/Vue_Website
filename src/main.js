@@ -8,11 +8,13 @@ import App from './App'
 import router from './router'
 import Loading from 'vue-loading-overlay';
 import pagination from './components/pagination';
-
+import currencyFilter from './components/filters/currency'
 import './bus';
 import 'vue-loading-overlay/dist/vue-loading.css';
 Vue.component("Loading", Loading)
 Vue.component('pagination', pagination);
+Vue.filter('currency', currencyFilter);
+
 
 // 啟用元件
 
