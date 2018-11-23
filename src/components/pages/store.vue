@@ -32,6 +32,7 @@
         </div>
       </div>
     </div>
+    <!-- 單一商品 -->
      <div class="modal fade" id="productModal" tabindex="-1" role="dialog"
       aria-labelledby="exampleModalLabel" aria-hidden="true">
       <div class="modal-dialog" role="document">
@@ -63,16 +64,59 @@
             <div class="text-muted text-nowrap mr-3">
               小計 <strong> {{product.num * product.price}} </strong> 元
             </div>
-            <button type="button" class="btn btn-primary"
+            <button type="button" class="btn btn-primary" @click.prevent="addCart(product.id,product.num)"
               >
-              <i class="fas fa-spinner fa-spin" ></i>
+              <i class="fas fa-spinner fa-spin" v-if="status.cart_loadingItem"></i>
               加到購物車
             </button>
           </div>
         </div>
       </div>
     </div>
-  
+    <!-- mycart -->
+ <table class="table">
+  <thead>
+    <th></th>
+    <th>品名</th>
+    <th>數量</th>
+    <th>單價</th>
+  </thead>
+  <tbody>
+    <tr v-for="item in cart.carts">
+      <td class="align-middle">
+        <button type="button" class="btn btn-outline-danger btn-sm">
+          <i class="far fa-trash-alt"></i>
+        </button>
+      </td>
+      <td class="align-middle">
+        {{ item.product.title }}
+        <!-- <div class="text-success" v-if="item.coupon">
+          已套用優惠券
+        </div> -->
+      </td>
+      <td class="align-middle">{{ item.qty }}/{{ item.product.unit }}</td>
+      <td class="align-middle text-right">{{ item.final_total }}</td>
+    </tr>
+  </tbody>
+  <tfoot>
+    <tr>
+      <td colspan="3" class="text-right">總計</td>
+      <td class="text-right">{{ cart.total }}</td>
+    </tr>
+    <tr>
+      <td colspan="3" class="text-right text-success">折扣價</td>
+      <td class="text-right text-success">{{ cart.final_total }}</td>
+    </tr>
+  </tfoot>
+</table>
+<div class="input-group mb-3 input-group-sm">
+  <input type="text" class="form-control" placeholder="請輸入優惠碼">
+  <div class="input-group-append">
+    <button class="btn btn-outline-secondary" type="button">
+      套用優惠碼
+    </button>
+  </div>
+</div>
   
   </div>
 
@@ -86,8 +130,10 @@ export default {
       product: {},
       isLoading: false,
       status: {
-        loadingItem: ""
-      }
+        loadingItem: "",
+        cart_loadingItem: false
+      },
+      cart: {}
     };
   },
   methods: {
@@ -117,10 +163,36 @@ export default {
         vm.isLoading = false;
         vm.status.loadingItem = "";
       });
+    },
+    addCart(product_id, qty = 1) {
+      const vm = this;
+      const url = `${process.env.APIPATH}/api/${process.env.CUSTOMPATH}/cart`;
+      vm.isLoading = true;
+      vm.status.cart_loadingItem = true;
+      const cart = {
+        product_id,
+        qty
+      };
+      this.$http.post(url, { data: cart }).then(response => {
+        console.log(response);
+        vm.isLoading = false;
+        vm.status.cart_loadingItem = false;
+        $("#productModal").modal("hide");
+        vm.getCart();
+      });
+    },
+    getCart() {
+      const vm = this;
+      const url = `${process.env.APIPATH}/api/${process.env.CUSTOMPATH}/cart`;
+      this.$http.get(url).then(response => {
+        vm.cart = response.data.data;
+        console.log(response);
+      });
     }
   },
   created() {
     this.getProducts();
+    this.getCart();
   }
 };
 </script>
