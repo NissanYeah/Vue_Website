@@ -9,6 +9,8 @@ import router from './router'
 import Loading from 'vue-loading-overlay';
 import pagination from './components/pagination';
 import currencyFilter from './components/filters/currency'
+import VeeValidate from 'vee-validate';
+
 import './bus';
 import 'vue-loading-overlay/dist/vue-loading.css';
 Vue.component("Loading", Loading)
@@ -17,7 +19,7 @@ Vue.filter('currency', currencyFilter);
 
 
 // 啟用元件
-
+Vue.use(VeeValidate);
 Vue.use(vueAxios, axios)
 
 Vue.config.productionTip = false;

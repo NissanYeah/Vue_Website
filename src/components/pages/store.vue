@@ -24,8 +24,8 @@
               <i v-if="status.loadingItem===item.id" class="fas fa-spinner fa-spin"></i>
               查看更多
             </button>
-            <button type="button" class="btn btn-outline-danger btn-sm ml-auto">
-              <i v-if="status.loadingItem===item.id" class="fas fa-spinner fa-spin"></i>
+            <button type="button" class="btn btn-outline-danger btn-sm ml-auto" @click.prevent="addCart(item.id,1)">
+              <i v-if="status.loadingItem===item.id" class="fas fa-spinner fa-spin" ></i>
               加到購物車
             </button>
           </div>
@@ -66,7 +66,7 @@
             </div>
             <button type="button" class="btn btn-primary" @click.prevent="addCart(product.id,product.num)"
               >
-              <i class="fas fa-spinner fa-spin" v-if="status.cart_loadingItem"></i>
+              <i class="fas fa-spinner fa-spin" v-if="status.cart_loadingItem" ></i>
               加到購物車
             </button>
           </div>
@@ -74,25 +74,26 @@
       </div>
     </div>
     <!-- mycart -->
- <table class="table">
-  <thead>
+
+   <table class="table">
+    <thead>
     <th></th>
     <th>品名</th>
     <th>數量</th>
     <th>單價</th>
   </thead>
   <tbody>
-    <tr v-for="item in cart.carts">
+    <tr v-for="item in cart.carts" :key="item.id">
       <td class="align-middle">
-        <button type="button" class="btn btn-outline-danger btn-sm">
+        <button type="button" class="btn btn-outline-danger btn-sm" @click="removeItem(item.id)">
           <i class="far fa-trash-alt"></i>
         </button>
       </td>
       <td class="align-middle">
         {{ item.product.title }}
-        <!-- <div class="text-success" v-if="item.coupon">
+        <div class="text-success" v-if="item.coupon">
           已套用優惠券
-        </div> -->
+        </div>
       </td>
       <td class="align-middle">{{ item.qty }}/{{ item.product.unit }}</td>
       <td class="align-middle text-right">{{ item.final_total }}</td>
@@ -110,18 +111,60 @@
   </tfoot>
 </table>
 <div class="input-group mb-3 input-group-sm">
-  <input type="text" class="form-control" placeholder="請輸入優惠碼">
+  <input type="text" class="form-control" placeholder="請輸入優惠碼" v-model="coupon_code">
   <div class="input-group-append">
-    <button class="btn btn-outline-secondary" type="button">
+    <button class="btn btn-outline-secondary" type="button" @click="addCouponCode">
       套用優惠碼
     </button>
   </div>
 </div>
+<!--表單-->
+<div class="my-5 row justify-content-center">
+  <form class="form-group" @submit.prevent="createOrder">
+    <div>
+       <label for="useremail">Email</label>
+        <input v-validate="'required|email'" name="email" type="text" class="form-control"     :class="{'is-invalid': errors.has('email')}" v-model="form.user.email" placeholder="請輸入 Email" required>
+        <span class="text-danger" v-if="errors.has('email')">{{ errors.first('email') }}</span>
+   
+    </div>
+
   
-  </div>
+    <div class="form-group">
+      <label for="username">收件人姓名</label>
+      <input v-validate="'alpha'" type="text" name="username" class="form-control"  :class="{'is-invalid': errors.has('username')}" v-model="form.user.name" placeholder="輸入姓名">       
+      <span class="text-danger">{{ errors.first('username') }}</span>
+    </div>
+  
+    <div class="form-group">
+      <label for="usertel">收件人電話</label>
+      
+      <input type="tel" class="form-control" id="usertel" v-model="form.user.tel" placeholder="請輸入電話">
+    </div>
+  
+    <div class="form-group">
+      <label for="useraddress">收件人地址</label>
+      <input type="address" class="form-control"  :class="{'is-invalid': errors.has('address')}" name="address" id="useraddress" v-model="form.user.address"
+        placeholder="請輸入地址">
+      <span class="text-danger" v-if="errors.has('address')">地址欄位不得留空</span>
+    </div>
+  
+    <div class="form-group">
+      <label for="useraddress">留言</label>
+      <textarea name="" id="" class="form-control" cols="30" rows="10" v-model="form.message"></textarea>
+    </div>
+    <div class="text-right">
+      <button class="btn btn-danger" >送出訂單</button>
+    </div>
+  </form>
+</div>
+
+</div> 
+
 
 </template>
  <script>
+import { ValidationProvider } from "vee-validate";
+
 import $ from "jquery";
 export default {
   data() {
@@ -133,8 +176,14 @@ export default {
         loadingItem: "",
         cart_loadingItem: false
       },
-      cart: {}
+      cart: {},
+      coupon_code: "",
+      form: { user: { name: "", email: "", tel: "", address: "" }, message: "" }
+      //購物車的商品
     };
+  },
+  components: {
+    ValidationProvider
   },
   methods: {
     getProducts() {
@@ -145,7 +194,6 @@ export default {
       vm.isLoading = true;
       this.$http.get(url).then(response => {
         vm.products = response.data.products;
-        console.log(response);
         vm.isLoading = false;
       });
     },
@@ -159,7 +207,6 @@ export default {
       vm.isLoading = true;
       this.$http.get(url).then(response => {
         vm.product = response.data.product;
-        console.log(response);
         vm.isLoading = false;
         vm.status.loadingItem = "";
       });
@@ -174,7 +221,6 @@ export default {
         qty
       };
       this.$http.post(url, { data: cart }).then(response => {
-        console.log(response);
         vm.isLoading = false;
         vm.status.cart_loadingItem = false;
         $("#productModal").modal("hide");
@@ -182,11 +228,54 @@ export default {
       });
     },
     getCart() {
+      // 取得購物車商品放到清單
       const vm = this;
       const url = `${process.env.APIPATH}/api/${process.env.CUSTOMPATH}/cart`;
       this.$http.get(url).then(response => {
         vm.cart = response.data.data;
-        console.log(response);
+      });
+    },
+    removeItem(id) {
+      const vm = this;
+      const url = `${process.env.APIPATH}/api/${
+        process.env.CUSTOMPATH
+      }/cart/${id}`;
+      vm.isLoading = true;
+      this.$http.delete(url).then(response => {
+        vm.getCart();
+        vm.isLoading = false;
+      });
+    },
+    addCouponCode() {
+      const vm = this;
+      const url = `${process.env.APIPATH}/api/${process.env.CUSTOMPATH}/coupon`;
+      const coupon = {
+        code: vm.coupon_code
+      };
+      // vm.isLoading = true;
+      this.$http.post(url, { data: coupon }).then(response => {
+        vm.getCart();
+        // vm.isLoading = false;
+        console.log("成功增加優惠卷");
+      });
+    },
+    createOrder() {
+      const vm = this;
+      const url = `${process.env.APIPATH}/api/${process.env.CUSTOMPATH}/order`;
+      const order = vm.form;
+      vm.isLoading = true;
+      this.$validator.validate().then(result => {
+        if (result) {
+          this.$http.post(url, { data: order }).then(response => {
+            console.log("訂單已建立", response);
+            if (response.data.success) {
+              vm.$router.push(`/customer_checkout/${response.data.orderId}`);
+            }
+            vm.isLoading = false;
+          });
+        } else {
+          console.log("欄位不完整");
+        }
       });
     }
   },

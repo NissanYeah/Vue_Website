@@ -20,20 +20,20 @@
             </ul>
             <ul class="nav flex-column mb-2">
               <li class="nav-item">
-                <a class="nav-link" href="#">
+                <router-link class="nav-link" to="/admin/coupon">
                   <i class="fas fa-ticket-alt"></i>
                   <span data-feather="file-text"></span>
                  優惠卷
-                </a>
+                </router-link>
               </li>
             </ul>
             <ul class="nav flex-column mb-2">
               <li class="nav-item">
-                <a class="nav-link" href="#">
+                <router-link class="nav-link" to="admin/order" >
                   <i class="fas fa-list-ol"></i>
                   <span data-feather="file-text"></span>
                  訂單列表
-                </a>
+                </router-link>
               </li>
             </ul>
             <!--  -->
@@ -50,6 +50,7 @@
                  購物頁面</i></router-link>
               </li>
             </ul>
+         
 
 
 
